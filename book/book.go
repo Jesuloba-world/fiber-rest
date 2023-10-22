@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/Jesuloba-world/fiber-rest/database"
-
 )
 
 // model
@@ -59,7 +58,30 @@ func DeleteBook(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).SendString("Book successfully deleted")
 }
 
-// should be implemented
-// func updateBook(c *fiber.Ctx) error {
+func UpdateBook(c *fiber.Ctx) error {
+	id := c.Params("id")
+	db := database.DB
 
-// }
+	// Find the book with the given ID
+	var book Book
+	result := db.First(&book, id)
+	if result.Error != nil {
+		return c.Status(http.StatusNotFound).SendString("No book found with given id")
+	}
+
+	// Parse the updated book details from the request body
+	updatedBook := new(Book)
+	if err := c.BodyParser(updatedBook); err != nil {
+		return c.Status(http.StatusBadRequest).SendString(err.Error())
+	}
+
+	// Update the book with the new details
+	book.Title = updatedBook.Title
+	book.Author = updatedBook.Author
+	book.Rating = updatedBook.Rating
+
+	// Save the updated book to the database
+	db.Save(&book)
+
+	return c.JSON(book)
+}
