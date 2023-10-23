@@ -62,13 +62,6 @@ func UpdateBook(c *fiber.Ctx) error {
 	id := c.Params("id")
 	db := database.DB
 
-	// Find the book with the given ID
-	var book Book
-	result := db.First(&book, id)
-	if result.Error != nil {
-		return c.Status(http.StatusNotFound).SendString("No book found with given id")
-	}
-
 	// Parse the updated book details from the request body
 	updatedBook := new(Book)
 	if err := c.BodyParser(updatedBook); err != nil {
@@ -76,12 +69,10 @@ func UpdateBook(c *fiber.Ctx) error {
 	}
 
 	// Update the book with the new details
-	book.Title = updatedBook.Title
-	book.Author = updatedBook.Author
-	book.Rating = updatedBook.Rating
+	result := db.Model(&Book{}).Where("id = ?", id).Updates(updatedBook)
+	if result.Error != nil {
+		return c.Status(http.StatusNotFound).SendString("No book found with given id")
+	}
 
-	// Save the updated book to the database
-	db.Save(&book)
-
-	return c.JSON(book)
+	return c.JSON(updatedBook)
 }
